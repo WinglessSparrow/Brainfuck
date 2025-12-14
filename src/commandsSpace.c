@@ -5,7 +5,7 @@
 
 #include "../include/vector.h"
 
-size_t readFile(FILE *file, Vector *vector) {
+size_t readFile(FILE* file, Vector* vector) {
     size_t sumBytesRead = 0;
     size_t lastRead = 0;
     char readBuff[1024];
@@ -14,13 +14,13 @@ size_t readFile(FILE *file, Vector *vector) {
         lastRead = fread(readBuff, sizeof(unsigned char), 100, file);
         sumBytesRead += lastRead;
 
-        push(vector, readBuff, lastRead);
+        push_v(vector, readBuff, lastRead);
     } while (lastRead != 0);
 
     return sumBytesRead;
 }
 
-CommandSpace initCommandSpace(FILE *file, const char *fileName) {
+CommandSpace initCommandSpace(FILE* file, const char* fileName) {
     CommandSpace commandSpace = {
         .programPointer = 0,
         .commands = nullptr,
@@ -31,7 +31,7 @@ CommandSpace initCommandSpace(FILE *file, const char *fileName) {
         .programNameSize = strlen(fileName),
     };
 
-    Vector *vector = new_v(1024);
+    Vector* vector = new_v(1024, 1);
 
     size_t bytesRead = readFile(file, vector);
 
@@ -49,12 +49,14 @@ CommandSpace initCommandSpace(FILE *file, const char *fileName) {
     return commandSpace;
 }
 
-int stripProgram(Vector *vector) {
+int stripProgram(Vector* vector) {
     int from = -1;
     int ammErased = 0;
 
     for (int i = 0; i < vector->curr; i++) {
-        switch ((Command) vector->data[i]) {
+        const auto cmd = (Command) ((char*) vector->data)[i];
+
+        switch (cmd) {
             case POINTER_INC:
             case POINTER_DEC:
             case DATA_INC:
@@ -64,7 +66,7 @@ int stripProgram(Vector *vector) {
             case JUMP_FROM:
             case JUMP_TO:
                 if (from != -1) {
-                    erase(vector, from, i);
+                    erase_v(vector, from, i);
 
                     ammErased += i - from;
 
@@ -83,7 +85,7 @@ int stripProgram(Vector *vector) {
     return ammErased;
 }
 
-int validateParenthesisPairs(const CommandSpace *commandSpace) {
+int validateParenthesisPairs(const CommandSpace* commandSpace) {
     int ammJumpFrom = 0;
     int ammJumpTo = 0;
 
@@ -104,12 +106,12 @@ int validateParenthesisPairs(const CommandSpace *commandSpace) {
     return ammJumpFrom;
 }
 
-void linkJumps(CommandSpace *commandSpace) {
+void linkJumps(CommandSpace* commandSpace) {
     commandSpace->jumpLinksSize = validateParenthesisPairs(commandSpace);
     commandSpace->jumpLinks = malloc(sizeof(JumpLink) * commandSpace->jumpLinksSize);
     int linksPointer = 0;
 
-    JumpLink *stack = malloc(sizeof(JumpLink) * commandSpace->jumpLinksSize);
+    JumpLink* stack = malloc(sizeof(JumpLink) * commandSpace->jumpLinksSize);
     int stackPointer = 0;
 
     for (int i = 0; i < commandSpace->size; i++) {
@@ -128,9 +130,9 @@ void linkJumps(CommandSpace *commandSpace) {
     }
 }
 
-int getJumpIdx(const CommandSpace *commandSpace, JumpDirection jumpDirection) {
+int getJumpIdx(const CommandSpace* commandSpace, JumpDirection jumpDirection) {
     const unsigned int programPointer = commandSpace->programPointer;
-    const JumpLink *links = commandSpace->jumpLinks;
+    const JumpLink* links = commandSpace->jumpLinks;
     int idx = 0;
 
     if (commandSpace->commands[programPointer] != JUMP_FROM &&

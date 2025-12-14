@@ -1,5 +1,5 @@
 //
-// Created by pavel on 30.11.2025.
+// Created by pavel on 14.12.2025.
 //
 
 #include "../include/vector.h"
@@ -7,75 +7,93 @@
 #include <stdlib.h>
 #include <string.h>
 
-void initAllocatedSpace(const Vector *vector) {
-    for (size_t i = vector->curr; i < vector->size; i++) {
-        vector->data[i] = 0;
-    }
-}
-
-Vector *new_v(const int size) {
-    Vector *vector = malloc(sizeof(Vector));
+Vector* new_v(const unsigned int size, const size_t typeSize) {
+    Vector* vector = malloc(sizeof(Vector));
 
     vector->size = size;
+    vector->typeSize = typeSize;
     vector->curr = 0;
-    vector->data = malloc(vector->size);
-
-    initAllocatedSpace(vector);
+    vector->data = calloc(vector->size, vector->typeSize);
 
     return vector;
 }
 
-void free_v(Vector *vector) {
+void free_v(Vector* vector) {
     free(vector->data);
     free(vector);
 }
 
-void push(Vector *vector, char *bytes, size_t size) {
-    if (vector->curr + size > vector->size) {
-        while (vector->curr + size > vector->size) {
-            vector->size *= 2;
-        }
-
-        // ReSharper disable once CppDFAMemoryLeak
-        char *dataTmp = realloc(vector->data, vector->size);
-
-        if (dataTmp == NULL) {
-            printf("not enough memory to relocate\n");
-            exit(0);
-        }
-        if (vector->data != dataTmp) {
-            vector->data = dataTmp;
-        }
-
-        initAllocatedSpace(vector);
-    }
-
-    memcpy(vector->data + vector->curr, bytes, size);
-
-    vector->curr += size;
+bool needsShrink(const Vector* vector) {
+    return vector->curr < vector->size / 2;
 }
 
-char *pop(Vector *vector, const size_t amount) {
+void shrink(Vector* vector) {
+    if (!needsShrink(vector)) return;
+
+    vector->size = vector->size / 2;
+
+    void* newMem = calloc(vector->size, vector->typeSize);
+
+    memcpy(newMem, vector->data, vector->curr * vector->typeSize);
+
+    free(vector->data);
+
+    vector->data = newMem;
+}
+
+void* pop_v(Vector* vector, const size_t amount) {
     if (vector->curr < amount) {
-        printf("trying to read more bytes than available");
-        exit(0);
+        printf("trying to read more than available");
+        exit(-1);
     }
 
-    char *buff = malloc(vector->curr);
+    const size_t buffSize = amount * vector->typeSize;
+    void* buff = malloc(buffSize);
 
-    int count = 0;
-
-    for (unsigned int i = vector->curr - amount - 1; i < vector->curr; i++) {
-        buff[count] = vector->data[i];
-        count++;
-    }
+    memcpy(buff, vector->data - buffSize, buffSize);
 
     vector->curr -= amount;
+
+    shrink(vector);
 
     return buff;
 }
 
-char *peek(const Vector *vector, const unsigned int from, const unsigned int to) {
+int calcExpandFactor(const Vector* vector, const size_t addSize) {
+    int factor = 1;
+
+    if (vector->curr + addSize > vector->size) {
+        while (vector->curr + addSize > vector->size * factor) {
+            factor *= 2;
+        }
+    }
+
+    return factor;
+}
+
+void expand(Vector* vector, const int factor) {
+    if (factor <= 1) return;
+
+    vector->size *= factor;
+
+    void* newMem = calloc(vector->size, vector->typeSize);
+
+    memcpy(newMem, vector->data, vector->curr * vector->typeSize);
+
+    free(vector->data);
+
+    vector->data = newMem;
+}
+
+void push_v(Vector* vector, const void* items, const size_t size) {
+    expand(vector, calcExpandFactor(vector, size));
+
+    memcpy(vector->data + vector->curr, items, size * vector->typeSize);
+
+    vector->curr += size;
+}
+
+void* peek_v(const Vector* vector, const unsigned int from, const unsigned int to) {
     const size_t size = to - from;
 
     if (vector->curr < to) {
@@ -83,23 +101,40 @@ char *peek(const Vector *vector, const unsigned int from, const unsigned int to)
         exit(0);
     }
 
-    char *buff = malloc(size);
+    void* buff = malloc(size * vector->typeSize);
 
-    memcpy(buff, vector->data + from, size);
+    memcpy(buff, vector->data + from * vector->typeSize, size * vector->typeSize);
 
     return buff;
 }
 
-void erase(Vector *vector, const unsigned int from, const unsigned int to) {
+void erase_v(Vector* vector, const unsigned int from, const unsigned int to) {
     if (vector->curr < to) {
-        printf("Out of bounds Erase attempt");
+        printf("Out of bounds Erase attempt (max: %d, trying from: %d to: %d)", vector->curr, from, to);
     }
 
-    for (unsigned int i = 0; i < vector->curr - from; i++) {
-        vector->data[from + i] = vector->data[to + i];
+    const unsigned int adjustedFrom = from * vector->typeSize;
+    const unsigned int adjustedTo = to * vector->typeSize;
+
+    for (unsigned int i = 0; i < vector->curr - adjustedFrom; i++) {
+        ((char*) vector->data)[adjustedFrom + i] = ((char*) vector->data)[adjustedTo + i];
     }
 
     vector->curr = vector->curr - (to - from);
 
-    initAllocatedSpace(vector);
+    shrink(vector);
+}
+
+void write_v(Vector* vector, void* src, const unsigned int from, const size_t size) {
+    const size_t overflow = from + size - vector->curr;
+
+    if (overflow > 0) {
+        expand(vector, calcExpandFactor(vector, overflow));
+
+        vector->curr += overflow;
+    }
+
+    for (unsigned int i = 0; i < size * vector->typeSize; i++) {
+        ((char*) vector->data)[i + from * vector->typeSize] = ((char*) src)[i];
+    }
 }
