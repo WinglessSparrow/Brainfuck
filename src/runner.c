@@ -1,4 +1,4 @@
-#include "../include/interpreter.h"
+#include "../include/runner.h"
 #include "../include/pointerSpace.h"
 
 void interpret(CommandSpace commandsSpace, PointerSpace pointerSpace) {

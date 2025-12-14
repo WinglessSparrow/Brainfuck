@@ -6,12 +6,6 @@ set(CMAKE_C_STANDARD 23)
 add_executable(
         Brainfuck
         main.c
-        src/vector.c
-        src/commandsSpace.c
-        include/commandsSpace.h
-        include/pointerSpace.h
-        include/vector.h
-        src/interpreter.c
-        include/interpreter.h
-        src/pointerSpace.c
+        src/vector_2.c
+        include/vector_2.h
 )

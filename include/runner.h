@@ -6,4 +6,4 @@
 
 void interpret(CommandSpace commandsSpace, PointerSpace pointerSpace);
 
-#endif //BRAINFUCK_INTERPRETER_H
+#endif
