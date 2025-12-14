@@ -5,10 +5,10 @@
 
 #include "vector.h"
 
-const size_t readFile(const FILE *file, const Vector *data);
+const size_t readFile(const FILE* file, const Vector* data);
 
-const char *getFileName(const char *filePath);
+const char* getFileName(const char* filePath);
 
-const bool isBrainfuckFile(const char *fileName);
+bool isBrainfuckFile(const char* fileName);
 
 #endif

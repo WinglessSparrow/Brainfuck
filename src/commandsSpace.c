@@ -35,6 +35,8 @@ CommandSpace initCommandSpace(FILE* file, const char* fileName) {
 
     size_t bytesRead = readFile(file, vector);
 
+    fclose(file);
+
     bytesRead -= stripProgram(vector);
 
     commandSpace.size = bytesRead;
@@ -100,7 +102,7 @@ int validateParenthesisPairs(const CommandSpace* commandSpace) {
 
     if (ammJumpFrom != ammJumpTo) {
         printf("not all the [ have a corresponding ]");
-        exit(0);
+        exit(1);
     }
 
     return ammJumpFrom;

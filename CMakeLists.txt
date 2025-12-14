@@ -14,4 +14,5 @@ add_executable(
         src/pointerSpace.c
         include/fileReader.h
         src/runner.c
+        src/fileReader.c
 )

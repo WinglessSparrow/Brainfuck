@@ -98,7 +98,7 @@ void* peek_v(const Vector* vector, const unsigned int from, const unsigned int t
 
     if (vector->curr < to) {
         printf("Out of bounds Peek attempt");
-        exit(0);
+        exit(1);
     }
 
     void* buff = malloc(size * vector->typeSize);

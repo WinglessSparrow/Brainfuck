@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-void fillNewSpace(const PointerSpace *pSpace, const int prevSize) {
+void fillNewSpace(const PointerSpace* pSpace, const int prevSize) {
     for (int i = prevSize; i < pSpace->size; i++) {
         pSpace->arr[i] = 0;
     }
@@ -20,7 +20,7 @@ PointerSpace new_ps() {
     return pSpace;
 }
 
-void expandArray(PointerSpace *pSpace) {
+void expandArray(PointerSpace* pSpace) {
     const int prevSize = pSpace->size;
 
     while (pSpace->pointingTo >= pSpace->size) {
@@ -28,11 +28,11 @@ void expandArray(PointerSpace *pSpace) {
     }
 
     // ReSharper disable once CppDFAMemoryLeak
-    char *tmp = realloc(pSpace->arr, pSpace->size);
+    char* tmp = realloc(pSpace->arr, pSpace->size);
 
     if (tmp == NULL) {
         printf("not enough memory to relocate\n");
-        exit(0);
+        exit(1);
     }
     if (pSpace->arr != tmp) {
         pSpace->arr = tmp;
@@ -41,7 +41,7 @@ void expandArray(PointerSpace *pSpace) {
     fillNewSpace(pSpace, prevSize);
 }
 
-void move(PointerSpace *pSpace, const MoveDirection direction) {
+void move(PointerSpace* pSpace, const MoveDirection direction) {
     switch (direction) {
         case FORWARDS:
             pSpace->pointingTo++;
@@ -55,18 +55,18 @@ void move(PointerSpace *pSpace, const MoveDirection direction) {
     }
 }
 
-void inc(const PointerSpace *pSpace) {
+void inc(const PointerSpace* pSpace) {
     pSpace->arr[pSpace->pointingTo]++;
 }
 
-void dec(const PointerSpace *pSpace) {
+void dec(const PointerSpace* pSpace) {
     pSpace->arr[pSpace->pointingTo]--;
 }
 
-void write(const PointerSpace *pSpace, const char byte) {
+void write(const PointerSpace* pSpace, const char byte) {
     pSpace->arr[pSpace->pointingTo] = byte;
 }
 
-char read(const PointerSpace *pSpace) {
+char read(const PointerSpace* pSpace) {
     return pSpace->arr[pSpace->pointingTo];
 }
